@@ -8,6 +8,6 @@ export { JokeFetchError, JokeService, JokeServiceFake, JokeServiceLive } from '.
 export { update } from './update.js'
 
 export const JokeProgram = makeProgram('@roughmagic/example-programs/Joke', {
-  init: { model: initialModel, effects: [] },
+  init: { model: initialModel, commands: [] },
   update,
 })

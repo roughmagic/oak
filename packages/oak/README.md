@@ -28,15 +28,15 @@ const Msg = Data.taggedEnum<Msg>()
 
 const update: Update<Model, Msg> = (msg, model) =>
   Msg.$match(msg, {
-    Increment: () => ({ model: { count: model.count + 1 }, effects: [] }),
+    Increment: () => ({ model: { count: model.count + 1 }, commands: [] }),
     IncrementLater: () => ({
       model,
-      effects: [Effect.as(Effect.sleep('1 second'), Msg.Increment())],
+      commands: [Effect.as(Effect.sleep('1 second'), Msg.Increment())],
     }),
   })
 
 const Counter = makeProgram('@my-app/Counter', {
-  init: { model: { count: 0 }, effects: [] },
+  init: { model: { count: 0 }, commands: [] },
   update,
 })
 
@@ -98,7 +98,7 @@ const send = <K extends string>(program: Program<K, Model, Msg>, msg: Msg) =>
 ### Types
 
 - `Command<Msg, R>`: `Effect<Msg, never, R>`. A command always yields a message. See [Commands](#commands).
-- `NextModel<M, Msg, R>`: `{ model: M, effects: ReadonlyArray<Command<Msg, R>> }`. `effects` is required. `effects: []` is Elm's `Cmd.none`.
+- `NextModel<M, Msg, R>`: `{ model: M, commands: ReadonlyArray<Command<Msg, R>> }`. `commands` is required. `commands: []` is Elm's `Cmd.none`.
 - `Update<M, Msg, R>`: `(msg: Msg, model: M) => NextModel<M, Msg, R>`.
 - `Subscription<Msg, R>`: `{ key: string, stream: Stream<Msg, never, R> }`.
 - `Subscriptions<M, Msg, R>`: `(model: M) => ReadonlyArray<Subscription<Msg, R>>`.

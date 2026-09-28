@@ -9,7 +9,7 @@ export { subscriptions } from './subscription.js'
 export { update } from './update.js'
 
 export const TimerProgram = makeProgram('@roughmagic/example-programs/Timer', {
-  init: { model: initialModel, effects: [] },
+  init: { model: initialModel, commands: [] },
   update,
   subscriptions,
 })

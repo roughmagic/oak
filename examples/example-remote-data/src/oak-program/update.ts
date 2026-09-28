@@ -19,7 +19,7 @@ const request = (model: ItemModel, keys: ReadonlyArray<ItemKey>) => {
   const idle = keys.filter((key) => !isLoading(getItem(model, key)))
   return {
     model: idle.reduce((next, key) => setItem(next, key, toLoading(getItem(next, key))), model),
-    effects: idle.map(fetchItem),
+    commands: idle.map(fetchItem),
   }
 }
 
@@ -29,10 +29,10 @@ export const update: Update<ItemModel, ItemMsg, ItemApi> = (msg, model) =>
     RequestAll: () => request(model, itemKeys),
     Received: ({ key, data, at }) => ({
       model: setItem(model, key, RemoteRecord.Loaded({ data, at })),
-      effects: [],
+      commands: [],
     }),
     Failed: ({ key, error }) => ({
       model: setItem(model, key, toErrored(getItem(model, key), error)),
-      effects: [],
+      commands: [],
     }),
   })

@@ -4,16 +4,16 @@ import { RandomModel, RandomMsg, RandomProgram, initialModel, update } from '../
 
 describe('random update', () => {
   it('Fetch marks the model pending and returns one command', () => {
-    const { model, effects } = update(RandomMsg.Fetch(), initialModel)
+    const { model, commands } = update(RandomMsg.Fetch(), initialModel)
     expect(model).toEqual(RandomModel({ pending: true, value: null }))
-    expect(effects).toHaveLength(1)
+    expect(commands).toHaveLength(1)
   })
 
   it('Set stores the value and clears pending', () => {
     const pending = RandomModel({ pending: true, value: null })
     expect(update(RandomMsg.Set({ value: 7 }), pending)).toEqual({
       model: RandomModel({ pending: false, value: 7 }),
-      effects: [],
+      commands: [],
     })
   })
 })

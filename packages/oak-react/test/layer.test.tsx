@@ -277,13 +277,13 @@ describe('OakProvider with a layer', () => {
     const program = makeProgram('test/Loader', {
       init: {
         model: 0,
-        effects: [
+        commands: [
           Effect.flatMap(Api, (api) => api.next).pipe(
             Effect.map((value): Loaded => ({ _tag: 'Loaded', value })),
           ),
         ],
       },
-      update: (msg: Loaded) => ({ model: msg.value, effects: [] }),
+      update: (msg: Loaded) => ({ model: msg.value, commands: [] }),
     })
     const { useSelector } = createOakHooks<number, Loaded>()
     function Value() {
@@ -329,7 +329,7 @@ describe('OakProvider with a layer', () => {
   it('ignores dispatch after the program stops', async () => {
     let updates = 0
     const program = makeProgram('test/Counter', {
-      init: { model: { count: 0, label: 'a' }, effects: [] },
+      init: { model: { count: 0, label: 'a' }, commands: [] },
       update: (msg: Msg, model: Model) => {
         updates++
         return update(msg, model)

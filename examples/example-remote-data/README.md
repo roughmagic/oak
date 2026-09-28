@@ -84,7 +84,7 @@ Oak requires.
 
 ```ts
 export const ItemProgram = makeProgram('@roughmagic/example-remote-data/Item', {
-  init: { model: initialModel, effects: [] },
+  init: { model: initialModel, commands: [] },
   update,
 })
 ```

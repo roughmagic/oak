@@ -47,7 +47,7 @@ const requestRefresh = (
 ): NextModel<DeskModel, DeskMsg, DeskApi> => {
   // One refresh at a time.
   if (model.refresh.pending) {
-    return { model, effects: [] }
+    return { model, commands: [] }
   }
   const next: DeskModel = {
     ...model,
@@ -58,39 +58,39 @@ const requestRefresh = (
       error: null,
     },
   }
-  return { model: next, effects: [refreshDesk(next)] }
+  return { model: next, commands: [refreshDesk(next)] }
 }
 
 export const update: Update<DeskModel, DeskMsg, DeskApi> = (msg, model) =>
   DeskMsg.$match(msg, {
-    SelectTask: ({ id }) => ({ model: { ...model, selectedTaskId: id }, effects: [] }),
-    SetFilter: ({ filter }) => ({ model: { ...model, filter }, effects: [] }),
+    SelectTask: ({ id }) => ({ model: { ...model, selectedTaskId: id }, commands: [] }),
+    SetFilter: ({ filter }) => ({ model: { ...model, filter }, commands: [] }),
     SetTaskStatus: ({ id, status, at }) => ({
       model: pipe(
         model,
         setTaskStatus(id, status),
         addActivity(`Marked task ${id} as ${status}`, at),
       ),
-      effects: [],
+      commands: [],
     }),
     ToggleAutoRefresh: () => ({
       model: { ...model, refresh: { ...model.refresh, enabled: !model.refresh.enabled } },
-      effects: [],
+      commands: [],
     }),
     RefreshRequested: () => requestRefresh(model, false),
     // The subscription stops when auto-refresh turns off, but a tick can still be on its way.
     RefreshTick: () =>
-      model.refresh.enabled ? requestRefresh(model, true) : { model, effects: [] },
+      model.refresh.enabled ? requestRefresh(model, true) : { model, commands: [] },
     RefreshSucceeded: ({ result }) => ({
       model: pipe(
         model,
         applyRefreshResult(result),
         addActivity(result.activityMessage, result.at),
       ),
-      effects: [],
+      commands: [],
     }),
     RefreshFailed: ({ message }) => ({
       model: { ...model, refresh: { ...model.refresh, pending: false, error: message } },
-      effects: [],
+      commands: [],
     }),
   })

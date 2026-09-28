@@ -7,6 +7,6 @@ export { RandomModel, initialModel } from './model.js'
 export { update } from './update.js'
 
 export const RandomProgram = makeProgram('@roughmagic/example-programs/Random', {
-  init: { model: initialModel, effects: [] },
+  init: { model: initialModel, commands: [] },
   update,
 })

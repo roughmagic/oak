@@ -12,11 +12,11 @@ describe('counter update', () => {
   it('Increment and Decrement change the count and run no commands', () => {
     expect(update(CounterMsg.Increment(), initialModel)).toEqual({
       model: CounterModel({ count: 1 }),
-      effects: [],
+      commands: [],
     })
     expect(update(CounterMsg.Decrement(), initialModel)).toEqual({
       model: CounterModel({ count: -1 }),
-      effects: [],
+      commands: [],
     })
   })
 

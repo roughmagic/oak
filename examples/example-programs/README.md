@@ -21,7 +21,7 @@ Each model is a `Data.case` value, and `update` changes it through `@fp-ts/optic
 ```ts
 const _count = caseIso(CounterModel).at('count')
 
-Increment: () => ({ model: Optic.modify(_count)((n) => n + 1)(model), effects: [] }),
+Increment: () => ({ model: Optic.modify(_count)((n) => n + 1)(model), commands: [] }),
 ```
 
 The next model is still a `Data.case` value, so `Equal.equals(model, CounterModel({ count: 1 }))` holds. The dice model in [example-react](../example-react/src/oak-program/optics.ts) is nested, and its lenses compose `caseIso` at every level.

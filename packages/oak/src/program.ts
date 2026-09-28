@@ -181,7 +181,7 @@ export function makeProgram<K extends string, M, Msg, R = never>(
     })
 
     // Elm's startup commands. They start like any other command: queued now, run later.
-    init.effects.forEach(runCommand)
+    init.commands.forEach(runCommand)
 
     // The reconcile loop runs in one fiber for the life of the program. It watches the model and
     // keeps one stream run per wanted key. Each stream run is a fiber of its own, spawned with a

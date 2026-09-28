@@ -19,21 +19,21 @@ const pending = TransferState.Pending({ id: 'transfer-1' })
 
 describe('transfer update', () => {
   it('init asks for the balance', () => {
-    const { model: first, effects } = TransferProgram.init
+    const { model: first, commands } = TransferProgram.init
     expect(first).toEqual(model({ balanceRequest: 1, balanceLoading: true }))
-    expect(effects).toHaveLength(1)
+    expect(commands).toHaveLength(1)
   })
 
   it('TransferRequested submits when idle and is ignored while a transfer runs', () => {
     const request = TransferMsg.TransferRequested({ to: 'savings', amount: 30 })
     const submitted = update(request, emptyModel)
     expect(submitted.model.transfer).toEqual(TransferState.Submitting())
-    expect(submitted.effects).toHaveLength(1)
+    expect(submitted.commands).toHaveLength(1)
 
     const busy = model({ transfer: pending })
     const ignored = update(request, busy)
     expect(ignored.model).toBe(busy)
-    expect(ignored.effects).toEqual([])
+    expect(ignored.commands).toEqual([])
   })
 
   it('Submitted makes the transfer pending under its id', () => {
@@ -57,11 +57,11 @@ describe('transfer update', () => {
       }),
     )
     // The toast's expiry and the balance request.
-    expect(settled.effects).toHaveLength(2)
+    expect(settled.commands).toHaveLength(2)
 
     const refresh = update(TransferMsg.BalanceRequested(), before)
     expect(refresh.model).toEqual(model({ ...before, balanceRequest: 4, balanceLoading: true }))
-    expect(refresh.effects).toHaveLength(1)
+    expect(refresh.commands).toHaveLength(1)
   })
 
   it('Settled for another transfer changes nothing', () => {
@@ -79,7 +79,7 @@ describe('transfer update', () => {
         nextToastId: 2,
       }),
     )
-    expect(failed.effects).toHaveLength(1)
+    expect(failed.commands).toHaveLength(1)
   })
 
   it('BalanceLoaded and BalanceFailed apply only to the latest request', () => {

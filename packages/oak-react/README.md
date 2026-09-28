@@ -24,11 +24,11 @@ export const Msg = Data.taggedEnum<Msg>()
 
 const update: Update<Model, Msg> = (msg, model) =>
   Msg.$match(msg, {
-    Increment: () => ({ model: { count: model.count + 1 }, effects: [] }),
+    Increment: () => ({ model: { count: model.count + 1 }, commands: [] }),
   })
 
 export const Counter = makeProgram('@my-app/Counter', {
-  init: { model: { count: 0 }, effects: [] },
+  init: { model: { count: 0 }, commands: [] },
   update,
 })
 ```

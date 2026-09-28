@@ -37,16 +37,16 @@ import type { Effect } from 'effect'
 export type Command<Msg, R = never> = Effect.Effect<Msg, never, R>
 
 /**
- * The next model and the commands to run. `effects: []` is Elm's `Cmd.none`.
+ * The next model and the commands to run. `commands: []` is Elm's `Cmd.none`.
  *
- * `effects` is required, so every branch of `update` states its commands, even when there are
+ * `commands` is required, so every branch of `update` states its commands, even when there are
  * none. An array of several commands is Elm's `Cmd.batch`.
  */
 // An object, not Elm's tuple. TypeScript types an unannotated `[model, []]` as an array, such
 // as `(number | never[])[]`, not as a pair. Named fields keep their types without annotations.
 export interface NextModel<M, Msg, R = never> {
   readonly model: M
-  readonly effects: ReadonlyArray<Command<Msg, R>>
+  readonly commands: ReadonlyArray<Command<Msg, R>>
 }
 
 /**

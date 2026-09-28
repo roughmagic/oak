@@ -25,11 +25,11 @@ export const update: Update<JokeModel, JokeMsg, JokeService> = (msg, model) =>
   JokeMsg.$match(msg, {
     Fetch: () => ({
       model: pipe(model, Optic.replace(_pending)(true), Optic.replace(_error)(null)),
-      effects: [fetchJoke],
+      commands: [fetchJoke],
     }),
-    Got: ({ joke }) => ({ model: JokeModel({ pending: false, joke, error: null }), effects: [] }),
+    Got: ({ joke }) => ({ model: JokeModel({ pending: false, joke, error: null }), commands: [] }),
     Failed: ({ error }) => ({
       model: pipe(model, Optic.replace(_pending)(false), Optic.replace(_error)(error)),
-      effects: [],
+      commands: [],
     }),
   })

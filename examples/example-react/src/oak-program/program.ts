@@ -4,7 +4,7 @@ import { subscriptions } from './subscription.js'
 import { update } from './update.js'
 
 export const DiceProgram = makeProgram('@roughmagic/example-react/Dice', {
-  init: { model: initialModel, effects: [] },
+  init: { model: initialModel, commands: [] },
   update,
   subscriptions,
 })

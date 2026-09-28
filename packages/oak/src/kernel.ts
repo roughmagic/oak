@@ -47,8 +47,8 @@ export interface Kernel<M, Msg> extends ProgramService<M, Msg> {
 export function makeKernel<M, Msg, C>(
   // The first model only. The kernel never sees init's commands: program.ts runs them itself.
   init: M,
-  // Structural, not NextModel: NextModel ties effects to Effect, and the kernel stays generic.
-  update: (msg: Msg, model: M) => { readonly model: M; readonly effects: ReadonlyArray<C> },
+  // Structural, not NextModel: NextModel ties commands to Effect, and the kernel stays generic.
+  update: (msg: Msg, model: M) => { readonly model: M; readonly commands: ReadonlyArray<C> },
   run: (cmd: C) => void,
   reportListener: (error: unknown) => void,
 ): Kernel<M, Msg> {
@@ -86,7 +86,7 @@ export function makeKernel<M, Msg, C>(
     try {
       // Step 1: Elm's update. If it throws, the throw leaves here, before anything changes: the
       // model stays, no listener runs and no command starts.
-      const { model: next, effects } = update(msg, model)
+      const { model: next, commands } = update(msg, model)
 
       // Step 2: store and notify, only when the model changed. A message that returns the same
       // model reaches no listener, so no view renders for it. React's own snapshot check, also
@@ -121,7 +121,7 @@ export function makeKernel<M, Msg, C>(
       // when the model did not change: a message may only start work, such as a fetch.
       //
       // `run` only schedules (see makeKernel above), so no command starts inside this dispatch.
-      for (const cmd of effects) {
+      for (const cmd of commands) {
         run(cmd)
       }
     } finally {

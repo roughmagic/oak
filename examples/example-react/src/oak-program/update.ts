@@ -30,7 +30,7 @@ const roll =
     const ready = dice.filter((die) => !isRolling(die)(model))
     return {
       model: ready.reduce((next, die) => startRolling(die)(next), model),
-      effects: ready.map(rollDie),
+      commands: ready.map(rollDie),
     }
   }
 
@@ -38,9 +38,9 @@ export const update: Update<DiceModel, DiceMsg, DiceRoller> = (msg, model) =>
   DiceMsg.$match(msg, {
     Roll: ({ die }) => roll([die])(model),
     RollAll: () => roll(dieIds)(model),
-    ToggleAutoRoll: () => ({ model: toggleAutoRoll(model), effects: [] }),
+    ToggleAutoRoll: () => ({ model: toggleAutoRoll(model), commands: [] }),
     // A tick can arrive after auto-roll stops.
     AutoRollTick: () =>
-      Optic.get(autoRollEnabled)(model) ? roll(dieIds)(countTick(model)) : { model, effects: [] },
-    Rolled: ({ die, value }) => ({ model: land(die, value)(model), effects: [] }),
+      Optic.get(autoRollEnabled)(model) ? roll(dieIds)(countTick(model)) : { model, commands: [] },
+    Rolled: ({ die, value }) => ({ model: land(die, value)(model), commands: [] }),
   })

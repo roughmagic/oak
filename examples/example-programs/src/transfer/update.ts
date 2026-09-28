@@ -50,7 +50,7 @@ export const requestBalance = (model: TransferModel): TransferNext => {
       Optic.replace(_balanceRequest)(request),
       Optic.replace(_balanceLoading)(true),
     ),
-    effects: [loadBalance(request)],
+    commands: [loadBalance(request)],
   }
 }
 
@@ -64,7 +64,7 @@ const showToast =
         Optic.modify(_toasts)(Arr.append(Toast({ id, text }))),
         Optic.replace(_nextToastId)(id + 1),
       ),
-      effects: [expireToast(id)],
+      commands: [expireToast(id)],
     }
   }
 
@@ -76,13 +76,13 @@ const andThen =
   <M, Msg, R>(step: (model: M) => NextModel<M, Msg, R>) =>
   (next: NextModel<M, Msg, R>): NextModel<M, Msg, R> => {
     const after = step(next.model)
-    return { model: after.model, effects: [...next.effects, ...after.effects] }
+    return { model: after.model, commands: [...next.commands, ...after.commands] }
   }
 
 const removeToast = (model: TransferModel, id: number): TransferNext =>
   model.toasts.some((toast) => toast.id === id)
-    ? { model: Optic.modify(_toasts)(Arr.filter((toast) => toast.id !== id))(model), effects: [] }
-    : { model, effects: [] }
+    ? { model: Optic.modify(_toasts)(Arr.filter((toast) => toast.id !== id))(model), commands: [] }
+    : { model, commands: [] }
 
 const idle = Optic.replace(_transfer)(TransferState.Idle())
 
@@ -93,13 +93,13 @@ export const update: Update<TransferModel, TransferMsg, Ledger> = (msg, model) =
       model.transfer._tag === 'Idle'
         ? {
             model: Optic.replace(_transfer)(TransferState.Submitting())(model),
-            effects: [submit(to, amount)],
+            commands: [submit(to, amount)],
           }
-        : { model, effects: [] },
+        : { model, commands: [] },
 
     Submitted: ({ id }) => ({
       model: Optic.replace(_transfer)(TransferState.Pending({ id }))(model),
-      effects: [],
+      commands: [],
     }),
 
     SubmitFailed: ({ error }) => pipe(model, idle, showToast(`Transfer failed: ${error}`)),
@@ -107,7 +107,7 @@ export const update: Update<TransferModel, TransferMsg, Ledger> = (msg, model) =
     Settled: ({ id }) =>
       model.transfer._tag === 'Pending' && model.transfer.id === id
         ? pipe(model, idle, showToast('Transfer settled'), andThen(requestBalance))
-        : { model, effects: [] },
+        : { model, commands: [] },
 
     BalanceRequested: () => requestBalance(model),
 
@@ -119,14 +119,14 @@ export const update: Update<TransferModel, TransferMsg, Ledger> = (msg, model) =
               Optic.replace(_balance)(balance),
               Optic.replace(_balanceLoading)(false),
             ),
-            effects: [],
+            commands: [],
           }
-        : { model, effects: [] },
+        : { model, commands: [] },
 
     BalanceFailed: ({ request, error }) =>
       request === model.balanceRequest
         ? pipe(model, Optic.replace(_balanceLoading)(false), showToast(`Balance failed: ${error}`))
-        : { model, effects: [] },
+        : { model, commands: [] },
 
     ToastDismissed: ({ id }) => removeToast(model, id),
 

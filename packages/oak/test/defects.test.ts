@@ -14,11 +14,11 @@ const boom = new Error('boom from update')
 const counter = (msg: Msg, model: number): NextModel<number, Msg> => {
   switch (msg._tag) {
     case 'Inc':
-      return { model: model + 1, effects: [] }
+      return { model: model + 1, commands: [] }
     case 'Throw':
       throw boom
     case 'Run':
-      return { model, effects: [msg.cmd] }
+      return { model, commands: [msg.cmd] }
   }
 }
 
@@ -26,7 +26,7 @@ const inc: Msg = { _tag: 'Inc' }
 const run = (cmd: Command<Msg>): Msg => ({ _tag: 'Run', cmd })
 
 const counterProgram = (key: string) =>
-  makeProgram(key, { init: { model: 0, effects: [] }, update: counter })
+  makeProgram(key, { init: { model: 0, commands: [] }, update: counter })
 
 interface Gate {
   readonly open: boolean
@@ -38,13 +38,13 @@ type GateMsg = { readonly _tag: 'Open' } | { readonly _tag: 'Close' } | { readon
 // Runs `socket` while the gate is open. Inc changes the model and keeps the key.
 const gateProgram = <R>(key: string, socket: Stream.Stream<never, never, R>) =>
   makeProgram(key, {
-    init: { model: { open: true, count: 0 }, effects: [] },
+    init: { model: { open: true, count: 0 }, commands: [] },
     update: (msg: GateMsg, model: Gate) => ({
       model:
         msg._tag === 'Inc'
           ? { ...model, count: model.count + 1 }
           : { ...model, open: msg._tag === 'Open' },
-      effects: [],
+      commands: [],
     }),
     subscriptions: (model) => (model.open ? [{ key: 'socket', stream: socket }] : []),
   })
@@ -77,7 +77,7 @@ describe('defects', () => {
 
     it("logs a throw from update on a stream's message and keeps the stream running", async () => {
       const program = makeProgram('test:update-throws-stream', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update: counter,
         subscriptions: () => [
           { key: 'messages', stream: Stream.fromIterable<Msg>([{ _tag: 'Throw' }, inc]) },
@@ -202,7 +202,7 @@ describe('defects', () => {
       const program = makeProgram('test:command-finalizer', {
         init: {
           model: 0,
-          effects: [Effect.never.pipe(Effect.ensuring(Effect.die(new Error('close failed'))))],
+          commands: [Effect.never.pipe(Effect.ensuring(Effect.die(new Error('close failed'))))],
         },
         update: counter,
       })
@@ -299,7 +299,7 @@ describe('defects', () => {
           Stream.ensuring(Effect.sync(() => events.push(`close${model}`))),
         )
       const program = makeProgram('test:subscriptions-throw', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update: counter,
         subscriptions: (model) => {
           if (model === 1) throw new Error('bad model')

@@ -33,9 +33,9 @@ type CounterMsg =
 const counter = (msg: CounterMsg, model: number) => {
   switch (msg._tag) {
     case 'Inc':
-      return { model: model + 1, effects: [] }
+      return { model: model + 1, commands: [] }
     case 'Run':
-      return { model, effects: [msg.cmd] }
+      return { model, commands: [msg.cmd] }
   }
 }
 
@@ -46,19 +46,19 @@ type GateMsg = { readonly _tag: 'Open' } | { readonly _tag: 'Close' }
 // Runs `socket` while the model is true.
 const socketProgram = <R>(key: string, socket: Stream.Stream<never, never, R>) =>
   makeProgram(key, {
-    init: { model: true, effects: [] },
-    update: (msg: GateMsg) => ({ model: msg._tag === 'Open', effects: [] }),
+    init: { model: true, commands: [] },
+    update: (msg: GateMsg) => ({ model: msg._tag === 'Open', commands: [] }),
     subscriptions: (open) => (open ? [{ key: 'socket', stream: socket }] : []),
   })
 
 describe('makeProgram', () => {
   describe('service', () => {
     it('is the Tag of its service: runSync(program) and yield* program return it', () => {
-      const program = makeProgram('test:tag', { init: { model: 7, effects: [] }, update: counter })
+      const program = makeProgram('test:tag', { init: { model: 7, commands: [] }, update: counter })
       const runtime = ManagedRuntime.make(program.layer)
       onTestFinished(() => runtime.dispose())
       const service = runtime.runSync(program)
-      expect(program.init).toEqual({ model: 7, effects: [] })
+      expect(program.init).toEqual({ model: 7, commands: [] })
       expect(service.state.value).toBe(7)
       expect(
         runtime.runSync(
@@ -70,7 +70,7 @@ describe('makeProgram', () => {
     })
 
     it('runs two programs with different keys side by side in one runtime', () => {
-      const config = { init: { model: 0, effects: [] }, update: counter }
+      const config = { init: { model: 0, commands: [] }, update: counter }
       const left = makeProgram('test:left', config)
       const right = makeProgram('test:right', config)
       const runtime = ManagedRuntime.make(Layer.merge(left.layer, right.layer))
@@ -84,7 +84,7 @@ describe('makeProgram', () => {
 
     it('does nothing on dispatch after its scope closes', async () => {
       const program = makeProgram('test:closed', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update: counter,
       })
       const { state, dispatch, runtime } = start(program)
@@ -95,7 +95,7 @@ describe('makeProgram', () => {
 
     it('stops dispatch before it interrupts running commands', async () => {
       const program = makeProgram('test:close-order', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update: counter,
       })
       const { state, dispatch, runtime } = start(program)
@@ -110,7 +110,7 @@ describe('makeProgram', () => {
       const program = makeProgram('test:first-run-sync', {
         init: {
           model: 0,
-          effects: [Effect.succeed<CounterMsg>({ _tag: 'Run', cmd: Effect.succeed(inc) })],
+          commands: [Effect.succeed<CounterMsg>({ _tag: 'Run', cmd: Effect.succeed(inc) })],
         },
         update: counter,
       })
@@ -122,7 +122,7 @@ describe('makeProgram', () => {
   describe('commands', () => {
     it('applies the message of a synchronous command after the dispatch that issued it', async () => {
       const program = makeProgram('test:sync-command', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update: counter,
       })
       const { state, dispatch, logs } = start(program)
@@ -141,7 +141,7 @@ describe('makeProgram', () => {
       const program = makeProgram('test:init-command', {
         init: {
           model: 0,
-          effects: [
+          commands: [
             Effect.sync(() => {
               ran++
               return inc
@@ -167,9 +167,9 @@ describe('makeProgram', () => {
         Effect.map(numbers.next, (value) => ({ _tag: 'Loaded' as const, value })),
       )
       const program = makeProgram('test:command-service', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update: (msg: Msg, model: number) =>
-          msg._tag === 'Fetch' ? { model, effects: [fetch] } : { model: msg.value, effects: [] },
+          msg._tag === 'Fetch' ? { model, commands: [fetch] } : { model: msg.value, commands: [] },
       })
       const runtime = ManagedRuntime.make(
         program.layer.pipe(Layer.provide(Layer.succeed(Numbers, { next: Effect.succeed(42) }))),
@@ -191,18 +191,18 @@ describe('makeProgram', () => {
         | { readonly _tag: 'Tick' }
         | { readonly _tag: 'Stop' }
       const program = makeProgram('test:timer', {
-        init: { model: { ticks: 0, running: false }, effects: [] },
+        init: { model: { ticks: 0, running: false }, commands: [] },
         update: (msg: TimerMsg, model: Timer) => {
           switch (msg._tag) {
             case 'Start':
               return {
                 model: { ...model, running: true },
-                effects: [Effect.as(Effect.sleep('4500 millis'), { _tag: 'Stop' as const })],
+                commands: [Effect.as(Effect.sleep('4500 millis'), { _tag: 'Stop' as const })],
               }
             case 'Tick':
-              return { model: { ...model, ticks: model.ticks + 1 }, effects: [] }
+              return { model: { ...model, ticks: model.ticks + 1 }, commands: [] }
             case 'Stop':
-              return { model: { ...model, running: false }, effects: [] }
+              return { model: { ...model, running: false }, commands: [] }
           }
         },
         subscriptions: (model) =>
@@ -236,10 +236,12 @@ describe('makeProgram', () => {
     // Dispatches Run, which runs `cmd`, and records each message that update receives.
     const runScoped = (key: string, cmd: Command<ScopedMsg, Scope.Scope>, events: string[]) => {
       const program = makeProgram(key, {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update: (msg: ScopedMsg, model: number) => {
           events.push(`update:${msg._tag}`)
-          return msg._tag === 'Run' ? { model, effects: [cmd] } : { model: model + 1, effects: [] }
+          return msg._tag === 'Run'
+            ? { model, commands: [cmd] }
+            : { model: model + 1, commands: [] }
         },
       })
       // Oak gives each command its own Scope, so the layer does not require one.
@@ -292,14 +294,14 @@ describe('makeProgram', () => {
     const update = (msg: Msg, model: Model) => {
       switch (msg._tag) {
         case 'Inc':
-          return { model: { ...model, count: model.count + 1 }, effects: [] }
+          return { model: { ...model, count: model.count + 1 }, commands: [] }
         case 'SetLabel':
-          return { model: { ...model, label: msg.label }, effects: [] }
+          return { model: { ...model, label: msg.label }, commands: [] }
         case 'Saw':
-          return { model: { ...model, seen: [...model.seen, msg.label] }, effects: [] }
+          return { model: { ...model, seen: [...model.seen, msg.label] }, commands: [] }
       }
     }
-    const init: NextModel<Model, Msg> = { model: { count: 0, label: 'a', seen: [] }, effects: [] }
+    const init: NextModel<Model, Msg> = { model: { count: 0, label: 'a', seen: [] }, commands: [] }
     const labelSubs: Subscriptions<Model, Msg> = (model) => [
       {
         key: `label:${model.label}`,
@@ -450,18 +452,18 @@ describe('makeProgram', () => {
         | { readonly _tag: 'Started'; readonly id: string }
       const released: string[] = []
       const program = makeProgram('test:sub-keyed', {
-        init: { model: { pending: ['x', 'y'], started: [] }, effects: [] },
+        init: { model: { pending: ['x', 'y'], started: [] }, commands: [] },
         update: (msg: WatchMsg, model: Watch) => {
           switch (msg._tag) {
             case 'Add':
-              return { model: { ...model, pending: [...model.pending, msg.id] }, effects: [] }
+              return { model: { ...model, pending: [...model.pending, msg.id] }, commands: [] }
             case 'Remove':
               return {
                 model: { ...model, pending: model.pending.filter((id) => id !== msg.id) },
-                effects: [],
+                commands: [],
               }
             case 'Started':
-              return { model: { ...model, started: [...model.started, msg.id] }, effects: [] }
+              return { model: { ...model, started: [...model.started, msg.id] }, commands: [] }
           }
         },
         subscriptions: (model) =>
@@ -499,10 +501,10 @@ describe('makeProgram', () => {
           Stream.ensuring(Effect.sync(() => events.push(`close${generation}`))),
         )
       const program = makeProgram('test:sub-generation', {
-        init: { model: { generation: 0 }, effects: [] },
+        init: { model: { generation: 0 }, commands: [] },
         update: (_msg: { readonly _tag: 'Restart' }, model: Socket) => ({
           model: { generation: model.generation + 1 },
-          effects: [],
+          commands: [],
         }),
         subscriptions: (model) => [
           { key: `socket:${model.generation}`, stream: socket(model.generation) },
@@ -580,16 +582,16 @@ describe('makeProgram', () => {
         | { readonly _tag: 'Reset' }
       const loaded = Effect.succeed({ _tag: 'Loaded' as const })
       const update = (msg: Msg, model: number) =>
-        msg._tag === 'Load' ? { model, effects: [loaded] } : { model: 0, effects: [] }
+        msg._tag === 'Load' ? { model, commands: [loaded] } : { model: 0, commands: [] }
       const ticks = Stream.make({ _tag: 'Tick' as const })
       // Each dispatch(Reset) below compiles only because of the NoInfer in makeProgram.
-      const plain = makeProgram('test:infer-update', { init: { model: 0, effects: [] }, update })
+      const plain = makeProgram('test:infer-update', { init: { model: 0, commands: [] }, update })
       const withInit = makeProgram('test:infer-init', {
-        init: { model: 0, effects: [loaded] },
+        init: { model: 0, commands: [loaded] },
         update,
       })
       const withSubs = makeProgram('test:infer-subs', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update,
         subscriptions: () => [{ key: 'tick', stream: ticks }],
       })
@@ -598,7 +600,7 @@ describe('makeProgram', () => {
       start(withSubs).dispatch({ _tag: 'Reset' })
     })
 
-    const config = { init: { model: 0, effects: [] }, update: counter }
+    const config = { init: { model: 0, commands: [] }, update: counter }
 
     it('types a program by its key, so a runtime that lacks it is a compile error', () => {
       const program = makeProgram('test:x', config)
@@ -625,11 +627,11 @@ describe('makeProgram', () => {
       const B = Context.GenericTag<B>('test:B')
       const update: Update<number, CounterMsg, A | B> = (_msg, model) => ({
         model,
-        effects: [Effect.flatMap(A, (a) => a.a)],
+        commands: [Effect.flatMap(A, (a) => a.a)],
       })
       const subscriptions = () => [{ key: 'b', stream: Stream.unwrap(Effect.map(B, (b) => b.b)) }]
       const program = makeProgram('test:services', {
-        init: { model: 0, effects: [] },
+        init: { model: 0, commands: [] },
         update,
         subscriptions,
       })

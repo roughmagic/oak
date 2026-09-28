@@ -14,9 +14,9 @@ import {
 describe('jokes update', () => {
   it('Fetch marks the model pending, clears the error and returns one command', () => {
     const failed = JokeModel({ pending: false, joke: null, error: 'HTTP 503' })
-    const { model, effects } = update(JokeMsg.Fetch(), failed)
+    const { model, commands } = update(JokeMsg.Fetch(), failed)
     expect(model).toEqual(JokeModel({ pending: true, joke: null, error: null }))
-    expect(effects).toHaveLength(1)
+    expect(commands).toHaveLength(1)
   })
 
   it('Got stores the joke', () => {

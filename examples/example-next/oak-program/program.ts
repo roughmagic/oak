@@ -6,7 +6,7 @@ import { update } from './update'
 /** The server seed is the first model, so each page mount makes its own program. */
 export const makeDeskProgram = (model: DeskModel) =>
   makeProgram('@roughmagic/example-next/Desk', {
-    init: { model, effects: [] },
+    init: { model, commands: [] },
     update,
     subscriptions,
   })

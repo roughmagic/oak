@@ -11,22 +11,22 @@ type Msg =
   | { readonly _tag: 'Set'; readonly value: number }
   | { readonly _tag: 'Same' }
   | { readonly _tag: 'Throw' }
-  | { readonly _tag: 'Fx'; readonly effects: ReadonlyArray<string> }
+  | { readonly _tag: 'Fx'; readonly commands: ReadonlyArray<string> }
 
 const boom = new Error('boom from update')
 
 const update = (msg: Msg, model: Model) => {
   switch (msg._tag) {
     case 'Inc':
-      return { model: { count: model.count + 1 }, effects: [] }
+      return { model: { count: model.count + 1 }, commands: [] }
     case 'Set':
-      return { model: { count: msg.value }, effects: [] }
+      return { model: { count: msg.value }, commands: [] }
     case 'Same':
-      return { model, effects: [] }
+      return { model, commands: [] }
     case 'Throw':
       throw boom
     case 'Fx':
-      return { model: { count: model.count + 1 }, effects: msg.effects }
+      return { model: { count: model.count + 1 }, commands: msg.commands }
   }
 }
 
@@ -145,7 +145,7 @@ describe('makeKernel', () => {
   it('hands each command to run in order, after the listeners', () => {
     const { kernel, ran } = setup()
     kernel.state.subscribe(() => ran.push('listener'))
-    kernel.dispatch({ _tag: 'Fx', effects: ['a', 'b'] })
+    kernel.dispatch({ _tag: 'Fx', commands: ['a', 'b'] })
     expect(ran).toEqual(['listener', 'a', 'b'])
   })
 
@@ -156,7 +156,7 @@ describe('makeKernel', () => {
         { count: 0 },
         (msg, model) => {
           if (msg._tag === 'Inc') kernel.dispatch({ _tag: 'Set', value: 99 })
-          return { model: { count: model.count + 1 }, effects: [] }
+          return { model: { count: model.count + 1 }, commands: [] }
         },
         () => {},
         reportListener,

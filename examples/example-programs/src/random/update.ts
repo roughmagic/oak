@@ -16,6 +16,6 @@ const fetchNumber: Command<RandomMsg> = Effect.sleep('2 seconds').pipe(
 
 export const update: Update<RandomModel, RandomMsg> = (msg, model) =>
   RandomMsg.$match(msg, {
-    Fetch: () => ({ model: Optic.replace(_pending)(true)(model), effects: [fetchNumber] }),
-    Set: ({ value }) => ({ model: RandomModel({ pending: false, value }), effects: [] }),
+    Fetch: () => ({ model: Optic.replace(_pending)(true)(model), commands: [fetchNumber] }),
+    Set: ({ value }) => ({ model: RandomModel({ pending: false, value }), commands: [] }),
   })

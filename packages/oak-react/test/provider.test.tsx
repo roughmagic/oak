@@ -109,11 +109,11 @@ describe('OakProvider', () => {
       return { _tag: 'Loaded' as const, value }
     })
     const program = makeProgram('test/Loader', {
-      init: { model: 'idle', effects: [] },
+      init: { model: 'idle', commands: [] },
       update: (msg: LoaderMsg) =>
         msg._tag === 'Load'
-          ? { model: 'loading', effects: [load] }
-          : { model: String(msg.value), effects: [] },
+          ? { model: 'loading', commands: [load] }
+          : { model: String(msg.value), commands: [] },
     })
     const numbers = Layer.succeed(Numbers, { next: Effect.delay(Effect.succeed(42), '5 millis') })
     const runtime = testRuntime(program.layer.pipe(Layer.provide(numbers)))
@@ -241,7 +241,7 @@ describe('OakProvider', () => {
     type Fragile = Msg | { readonly _tag: 'Boom' }
     const boom = new Error('update failed')
     const program = makeProgram('test/Fragile', {
-      init: { model: { count: 0, label: 'a' }, effects: [] },
+      init: { model: { count: 0, label: 'a' }, commands: [] },
       update: (msg: Fragile, model: Model) => {
         if (msg._tag === 'Boom') {
           throw boom
@@ -504,8 +504,8 @@ describe('OakProvider types', () => {
     }
     const Api = Context.GenericTag<Api>('test/Api')
     const withApi = makeProgram('test/WithApi', {
-      init: { model: 0, effects: [] },
-      update: (_msg: Msg, n: number) => ({ model: n, effects: [Effect.as(Api, inc)] }),
+      init: { model: 0, commands: [] },
+      update: (_msg: Msg, n: number) => ({ model: n, commands: [Effect.as(Api, inc)] }),
     })
     const program = counted.program
 

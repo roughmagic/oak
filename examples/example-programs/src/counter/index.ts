@@ -7,6 +7,6 @@ export { CounterModel, initialModel } from './model.js'
 export { update } from './update.js'
 
 export const CounterProgram = makeProgram('@roughmagic/example-programs/Counter', {
-  init: { model: initialModel, effects: [] },
+  init: { model: initialModel, commands: [] },
   update,
 })

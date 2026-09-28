@@ -10,10 +10,10 @@ Oak is a TypeScript implementation of [The Elm Architecture](https://guide.elm-l
 | ------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `Model`                                     | Any immutable TypeScript value                                                           |
 | `Msg`                                       | A tagged union, such as `Data.TaggedEnum`                                                |
-| `init : flags -> (Model, Cmd Msg)`          | `init: { model, effects }`                                                               |
-| `update : Msg -> Model -> (Model, Cmd Msg)` | `update(msg, model) => { model, effects }`                                               |
+| `init : flags -> (Model, Cmd Msg)`          | `init: { model, commands }`                                                              |
+| `update : Msg -> Model -> (Model, Cmd Msg)` | `update(msg, model) => { model, commands }`                                              |
 | `Cmd Msg`                                   | `Command<Msg, R>`, which is `Effect<Msg, never, R>`                                      |
-| `Cmd.none`                                  | `effects: []`                                                                            |
+| `Cmd.none`                                  | `commands: []`                                                                           |
 | `subscriptions : Model -> Sub Msg`          | `subscriptions(model) => [{ key, stream }]`, where `stream` is a `Stream<Msg, never, R>` |
 | `Browser.element`                           | `makeProgram(key, { init, update, subscriptions })` and `OakProvider`                    |
 
@@ -56,12 +56,12 @@ const Msg = Data.taggedEnum<Msg>()
 
 const update: Update<Model, Msg> = (msg, model) =>
   Msg.$match(msg, {
-    Increment: () => ({ model: { count: model.count + 1 }, effects: [] }),
-    Reset: () => ({ model: { count: 0 }, effects: [] }),
+    Increment: () => ({ model: { count: model.count + 1 }, commands: [] }),
+    Reset: () => ({ model: { count: 0 }, commands: [] }),
   })
 
 const Counter = makeProgram('@my-app/Counter', {
-  init: { model: { count: 0 }, effects: [] },
+  init: { model: { count: 0 }, commands: [] },
   update,
 })
 
@@ -92,7 +92,7 @@ export function App() {
 
 ### Update
 
-`update(msg, model)` returns a `NextModel`: `{ model, effects }`. `model` is the next model. `effects` lists the commands to run. `effects` is required, and `effects: []` is Elm's `Cmd.none`.
+`update(msg, model)` returns a `NextModel`: `{ model, commands }`. `model` is the next model. `commands` lists the commands to run. `commands` is required, and `commands: []` is Elm's `Cmd.none`.
 
 `update` is pure and never mutates the model. A change returns a new model, with new objects along the path to every changed field. A message that changes nothing may return the same model. Oak compares models with `Object.is`, so the same model notifies nobody.
 
@@ -107,21 +107,21 @@ A command can also read Effect's `Clock` or `Random` and return a message that c
 A pure `update` needs no runtime to test:
 
 ```ts
-expect(update(Msg.Increment(), { count: 1 })).toEqual({ model: { count: 2 }, effects: [] })
+expect(update(Msg.Increment(), { count: 1 })).toEqual({ model: { count: 2 }, commands: [] })
 ```
 
 The model can be plain readonly objects or `Data.case` values. example-programs and example-react use `Data.case` models and change them through `@fp-ts/optic` lenses. [example-programs](examples/example-programs#models) shows how a lens keeps a `Data.case` model's structural equality. example-next and example-remote-data use plain readonly objects and spreads. example-next needs a plain model, because its seed crosses from the server to the client.
 
 ### Commands
 
-A command is an `Effect` that yields one message. Its type is `Command<Msg, R>`, which is `Effect<Msg, never, R>`. `update` returns commands in `effects`. Oak runs each one on the program's runtime and dispatches the message it yields. The commands in `init.effects` run when the program starts.
+A command is an `Effect` that yields one message. Its type is `Command<Msg, R>`, which is `Effect<Msg, never, R>`. `update` returns commands in its `commands` field. Oak runs each one on the program's runtime and dispatches the message it yields. The commands in `init.commands` run when the program starts.
 
 A delayed increment, as one case of `update`:
 
 ```ts
 IncrementLater: () => ({
   model,
-  effects: [Effect.as(Effect.sleep('1 second'), Msg.Increment())],
+  commands: [Effect.as(Effect.sleep('1 second'), Msg.Increment())],
 }),
 ```
 
@@ -156,9 +156,9 @@ const fetchJoke: Command<Msg, JokeService> = Effect.flatMap(
 
 const update: Update<Model, Msg, JokeService> = (msg, model) =>
   Msg.$match(msg, {
-    Fetch: () => ({ model: { ...model, pending: true, error: null }, effects: [fetchJoke] }),
-    Got: ({ joke }) => ({ model: { pending: false, joke, error: null }, effects: [] }),
-    Failed: ({ error }) => ({ model: { ...model, pending: false, error }, effects: [] }),
+    Fetch: () => ({ model: { ...model, pending: true, error: null }, commands: [fetchJoke] }),
+    Got: ({ joke }) => ({ model: { pending: false, joke, error: null }, commands: [] }),
+    Failed: ({ error }) => ({ model: { ...model, pending: false, error }, commands: [] }),
   })
 ```
 
@@ -206,7 +206,7 @@ const JokeServiceLive = Layer.succeed(
 )
 
 const Jokes = makeProgram('@my-app/Jokes', {
-  init: { model: { pending: false, joke: null, error: null }, effects: [] },
+  init: { model: { pending: false, joke: null, error: null }, commands: [] },
   update,
 })
 
@@ -350,16 +350,16 @@ const update: Update<Model, Msg, Ledger> = (msg, model) =>
   Msg.$match(msg, {
     BalanceRequested: () => {
       const request = model.balanceRequest + 1
-      return { model: { ...model, balanceRequest: request }, effects: [loadBalance(request)] }
+      return { model: { ...model, balanceRequest: request }, commands: [loadBalance(request)] }
     },
     BalanceLoaded: ({ request, balance }) =>
       request === model.balanceRequest
-        ? { model: { ...model, balance, error: null }, effects: [] }
-        : { model, effects: [] },
+        ? { model: { ...model, balance, error: null }, commands: [] }
+        : { model, commands: [] },
     BalanceFailed: ({ request, error }) =>
       request === model.balanceRequest
-        ? { model: { ...model, error }, effects: [] }
-        : { model, effects: [] },
+        ? { model: { ...model, error }, commands: [] }
+        : { model, commands: [] },
   })
 ```
 
@@ -537,7 +537,7 @@ To start from server data, pass the data to a function that makes the program, a
 // oak-program/program.ts
 export const makeDeskProgram = (model: DeskModel) =>
   makeProgram('@roughmagic/example-next/Desk', {
-    init: { model, effects: [] },
+    init: { model, commands: [] },
     update,
     subscriptions,
   })
@@ -658,9 +658,9 @@ Here are four recipes, from the cheapest to the most complete.
 
 ```ts
 it('Fetch marks the model pending and returns one command', () => {
-  const { model, effects } = update(Msg.Fetch(), initialModel)
+  const { model, commands } = update(Msg.Fetch(), initialModel)
   expect(model.pending).toBe(true)
-  expect(effects).toHaveLength(1)
+  expect(commands).toHaveLength(1)
 })
 ```
 
@@ -674,11 +674,11 @@ it('keys the ticker by its interval', () => {
 })
 ```
 
-A command is an `Effect`. Take it from `effects`, provide a fake service, and run it:
+A command is an `Effect`. Take it from `commands`, provide a fake service, and run it:
 
 ```ts
 it('turns a failed fetch into Failed', async () => {
-  const [command] = update(Msg.Fetch(), initialModel).effects
+  const [command] = update(Msg.Fetch(), initialModel).commands
   const down = Layer.succeed(
     JokeService,
     JokeService.of({ fetchJoke: Effect.fail(new JokeError({ message: 'HTTP 503' })) }),

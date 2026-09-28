@@ -45,21 +45,21 @@ export const inc: Msg = { _tag: 'Inc' }
 export const update: Update<Model, Msg> = (msg, model) => {
   switch (msg._tag) {
     case 'Inc':
-      return { model: { ...model, count: model.count + 1 }, effects: [] }
+      return { model: { ...model, count: model.count + 1 }, commands: [] }
     case 'SetLabel':
-      return { model: { ...model, label: msg.label }, effects: [] }
+      return { model: { ...model, label: msg.label }, commands: [] }
     case 'Copy':
       // A new model with the same values.
-      return { model: { ...model }, effects: [] }
+      return { model: { ...model }, commands: [] }
   }
 }
 
-export const makeCounter = (count = 0, effects: ReadonlyArray<Command<Msg>> = []) =>
-  makeProgram('test/Counter', { init: { model: { count, label: 'a' }, effects }, update })
+export const makeCounter = (count = 0, commands: ReadonlyArray<Command<Msg>> = []) =>
+  makeProgram('test/Counter', { init: { model: { count, label: 'a' }, commands }, update })
 
 /** A counter whose layer counts its builds and disposals. */
-export const makeCounted = (count = 0, effects: ReadonlyArray<Command<Msg>> = []) => {
-  const program = makeCounter(count, effects)
+export const makeCounted = (count = 0, commands: ReadonlyArray<Command<Msg>> = []) => {
+  const program = makeCounter(count, commands)
   const { stats, layer } = counting()
   return { program, stats, layer: Layer.merge(program.layer, layer) }
 }
@@ -103,10 +103,10 @@ export const makeTicker = () => {
   const counted = counting()
   const stats = Object.assign(counted.stats, { updates: 0 })
   const program = makeProgram('test/Ticker', {
-    init: { model: 0, effects: [] },
+    init: { model: 0, commands: [] },
     update: (_msg: Tick, ticks: number) => {
       stats.updates++
-      return { model: ticks + 1, effects: [] }
+      return { model: ticks + 1, commands: [] }
     },
     subscriptions: () => [
       { key: 'tick', stream: Stream.tick('5 millis').pipe(Stream.as<Tick>({ _tag: 'Tick' })) },
