@@ -1,0 +1,19 @@
+{
+  "name": "@roughmagic/example-programs",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p . && tsc -p test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fp-ts/optic": "catalog:",
+    "@roughmagic/oak": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

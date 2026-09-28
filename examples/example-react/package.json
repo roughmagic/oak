@@ -1,0 +1,25 @@
+{
+  "name": "@roughmagic/example-react",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "dev": "vite",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@fp-ts/optic": "catalog:",
+    "@roughmagic/oak": "workspace:*",
+    "@roughmagic/oak-react": "workspace:*",
+    "effect": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

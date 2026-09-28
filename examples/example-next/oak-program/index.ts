@@ -1,0 +1,5 @@
+export { DeskMsg } from './message'
+export { makeDeskProgram } from './program'
+export { DeskApiLive } from './service'
+export { selectSelectedTask, selectSummary, selectVisibleTasks } from './selectors'
+export type { DeskFilter, DeskMode, DeskModel, DeskTask, TaskStatus } from './model'

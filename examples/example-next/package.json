@@ -1,0 +1,27 @@
+{
+  "name": "@roughmagic/example-next",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "start": "next start",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@roughmagic/oak": "workspace:*",
+    "@roughmagic/oak-react": "workspace:*",
+    "effect": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "reselect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  }
+}
